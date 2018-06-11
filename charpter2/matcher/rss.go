@@ -84,21 +84,19 @@ func (m rssMatcher) Search(feed *search.Feed, searchTerm string) ([]*search.Resu
 			})
 		}
 
-		matched, err := regexp.MatchString(searchTerm, channelItem.Description)
+		matched, err = regexp.MatchString(searchTerm, channelItem.Description)
 		if err != nil {
 			return nil, err
 		}
 
 		if matched {
-			results = append(results, search.Result{
+			results = append(results, &search.Result{
 				Field: "Description",
 				Content: channelItem.Description,
 			})
 		}
-
-		return results, nil
 	}
-	
+	return results, nil
 }
 
 func (m rssMatcher) retrieve(feed *search.Feed) (*rssDocument, error) {
