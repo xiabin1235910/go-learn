@@ -5,8 +5,9 @@ import (
 	"io"
 	"sync/atomic"
 	"go-learn/charpter7/pool"
-	"fmt"
 	"sync"
+	"time"
+	"math/rand"
 )
 
 const (
@@ -46,12 +47,24 @@ func main() {
 	}
 
 	for query:=0; query<maxGoRoutines; query++ {
-		func(q int) {
-			fmt.Println(q)
-			p.Acquire()
+		go func(q int) {
+//			fmt.Println(q)
+			//			p.Acquire()
+			performanceQuqery(p, q)
 			wg.Done()
 		}(query)
 	}
 
 	wg.Wait()
+}
+
+func performanceQuqery(p *pool.Pool, q int) {
+	conn, err := p.Acquire()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer p.Release(conn)
+
+	time.Sleep(time.Duration(rand.Intn(1000)) * time.Microsecond)
 }

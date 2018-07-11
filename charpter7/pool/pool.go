@@ -4,9 +4,11 @@ import (
 	"io"
 	"errors"
 	"log"
+	"sync"
 )
 
 type Pool struct {
+	m sync.Mutex
 	resources chan io.Closer
 	factory func() (io.Closer, error)
 }
@@ -27,18 +29,27 @@ func New(fn func() (io.Closer, error), size uint) (*Pool, error) {
 func (p *Pool) Acquire() (io.Closer, error) {
 	select {
 	case r, ok := <-p.resources:
-		log.Println("Acquire", " Shared Resource")
+		log.Println("Acquire", "++++++++++ Shared Resource:")
 		if !ok {
 			log.Println("Pool has been closed")
 			return nil, err
 		}
 		return r, nil
 	default:
-		log.Println("Acquire", " New Resource")
+		log.Println("Acquire", "------------ New Resource")
 		return p.factory()
 	}
 }
 
-func Release() {
-	
+func (p *Pool) Release(r io.Closer) {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	select {
+	case p.resources <- r:
+		log.Println("rrrrrrrrrrrr Release", ":++++++In Queue:")
+	default:
+		r.Close()
+		log.Println("cccccccccccc Release", "-------Closing")
+	}
 }
