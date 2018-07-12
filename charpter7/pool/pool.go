@@ -11,6 +11,7 @@ type Pool struct {
 	m sync.Mutex
 	resources chan io.Closer
 	factory func() (io.Closer, error)
+	closed bool
 }
 
 var err = errors.New("Pool has been closed")
@@ -27,6 +28,9 @@ func New(fn func() (io.Closer, error), size uint) (*Pool, error) {
 }
 
 func (p *Pool) Acquire() (io.Closer, error) {
+	p.m.Lock()
+	defer p.m.Unlock()
+	
 	select {
 	case r, ok := <-p.resources:
 		log.Println("Acquire", "++++++++++ Shared Resource:")
@@ -53,3 +57,22 @@ func (p *Pool) Release(r io.Closer) {
 		log.Println("cccccccccccc Release", "-------Closing")
 	}
 }
+
+func (p *Pool) Close() {
+	p.m.Lock();
+	defer p.m.Unlock()
+
+	if p.closed {
+		return
+	}
+
+	p.closed = true;
+
+	close(p.resources)
+
+	for r := range p.resources {
+		r.Close()
+	}
+
+//	close(p.resources)
+} 

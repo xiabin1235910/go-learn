@@ -56,6 +56,9 @@ func main() {
 	}
 
 	wg.Wait()
+
+	log.Println("shutdown Program....")
+	p.Close()
 }
 
 func performanceQuqery(p *pool.Pool, q int) {
@@ -66,5 +69,6 @@ func performanceQuqery(p *pool.Pool, q int) {
 	}
 	defer p.Release(conn)
 
-	time.Sleep(time.Duration(rand.Intn(1000)) * time.Microsecond)
+	time.Sleep(time.Duration(rand.Intn(10)) * time.Microsecond)
+	log.Println(q, " is related to connection id ", conn.(*dbConnection).ID)
 }
